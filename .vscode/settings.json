@@ -1,0 +1,12 @@
+{
+  "python.analysis.typeCheckingMode": "basic",
+  "python.formatting.autopep8Args": ["--indent-size=2"],
+  "editor.tabSize": 2,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.wordWrap": "on",
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true
+}
