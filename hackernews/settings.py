@@ -149,11 +149,11 @@ CELERY_BEAT_SCHEDULE = {
             'expires': 180.0,
         },
     },
-    #     'sync-jobs-task': {
-    #         'task': 'news.tasks.sync_jobs_task',
-    #         'schedule': 1800.0,
-    #         'options': {
-    #             'expires': 300.0,
-    #         },
-    #     },
+    'sync_jobs_task': {
+        'task': 'news.tasks.sync_jobs_task',
+        'schedule': 900.0,
+        'options': {
+            'expires': 180.0,
+        },
+    },
 }

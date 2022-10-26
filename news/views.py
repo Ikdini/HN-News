@@ -32,7 +32,14 @@ class GetItemView(GenericAPIView):
 
   def get(self, request):
     # get all items from the database and return them
-    items = [story.serialize() for story in Story.objects.all()]
+    def mySort(item):
+      return item['time']
+
+    stories = [story.serialize() for story in Story.objects.all()]
+    jobs = [job.serialize() for job in Job.objects.all()]
+
+    items = stories + jobs
+    items.sort(key=mySort, reverse=True)
     return response.Response(items, status=status.HTTP_200_OK)
 
   # def get(self, request):
@@ -116,3 +123,12 @@ class NewStoriesView(GenericAPIView):
     decoded = baseAPIConnection(url)
     decoded_100 = decoded[:100]
     return response.Response({'New Stories Id': decoded_100}, status=status.HTTP_200_OK)
+
+
+class NewJobsView(GenericAPIView):
+  def get(self, request):
+    # Get the latest 100 stories Id from the API
+    url = "/v0/jobstories.json?print=pretty"
+    decoded = baseAPIConnection(url)
+    decoded_100 = decoded[:100]
+    return response.Response({'New Jobs Id': decoded_100}, status=status.HTTP_200_OK)
