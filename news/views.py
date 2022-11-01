@@ -1,10 +1,10 @@
-from django.shortcuts import render
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework import response, status
 import http.client
 import json
 from .models import *
-from . import tasks
+from django_filters.rest_framework import DjangoFilterBackend
+from .serializers import *
 
 
 # Create your views here.
@@ -19,116 +19,97 @@ def baseAPIConnection(url):
   return json.loads(data.decode("utf-8"))
 
 
-class MaxItemView(GenericAPIView):
+def pagination(self, request, items):
+  pg = request.query_params.get('page')
+  if pg:
+    page = self.paginate_queryset(items)
+    if page is not None:
+      return page, pg
+
+
+class MaxItemIdView(GenericAPIView):
   def get(self, request):
     # Get the max item id from the API
     url = "/v0/maxitem.json?print=pretty"
     decoded = baseAPIConnection(url)
-    # tasks.sync_stories_task.delay()
     return response.Response({'Max Item Id': decoded}, status=status.HTTP_200_OK)
-
-
-class GetItemView(GenericAPIView):
-
-  def get(self, request):
-    # get all items from the database and return them
-    def mySort(item):
-      return item['time']
-
-    stories = [story.serialize() for story in Story.objects.all()]
-    jobs = [job.serialize() for job in Job.objects.all()]
-
-    items = stories + jobs
-    items.sort(key=mySort, reverse=True)
-    return response.Response(items, status=status.HTTP_200_OK)
-
-  # def get(self, request):
-  #   # TODO: add a try catch block to handle the error
-  #   # Get new stories from the API
-
-  #   url = "/v0/newstories.json?print=pretty"
-  #   decoded = baseAPIConnection(url)
-  #   decoded_100 = decoded[:100]
-
-  #   # get the item properties and save to the database if it doesn't exist
-  #   for itemId in decoded_100:
-  #     if Story.objects.filter(id=itemId).exists():
-  #       print(f'Story already exists with id {itemId}')
-  #       continue
-
-  #     url = f"/v0/item/{itemId}.json?print=pretty"
-  #     decoded_dtls = baseAPIConnection(url)
-
-  #     try:
-  #       if 'deleted' in decoded_dtls:
-  #         continue
-  #     except Exception as e:
-  #       print(e)
-  #       print(
-  #           f'ERROR OCCURED WITH THIS ID {itemId} WHEN CHECKING IF DELETED\n')
-  #       continue
-
-  #     id = decoded_dtls['id']
-  #     typ = decoded_dtls['type']
-  #     by = None
-  #     time = None
-  #     descendants = None
-  #     score = None
-  #     title = None
-  #     url = "http://stoplight.io/prism/"
-
-  #     try:
-  #       if "by" in decoded_dtls:
-  #         by = decoded_dtls["by"]
-  #       if "time" in decoded_dtls:
-  #         time = decoded_dtls["time"]
-  #       if "descendants" in decoded_dtls:
-  #         descendants = decoded_dtls["descendants"]
-  #       if "score" in decoded_dtls:
-  #         score = decoded_dtls["score"]
-  #       if "title" in decoded_dtls:
-  #         title = decoded_dtls["title"]
-  #       if "url" in decoded_dtls:
-  #         url = decoded_dtls["url"]
-  #     except Exception as e:
-  #       print(e)
-  #       print(
-  #           f'ERROR OCCURED WITH THIS ID {itemId} WHEN CHECKING THE DECODED PROPERTIES\n')
-  #       print(f'{decoded_dtls}\n')
-  #       continue
-
-  #     Story.objects.create(id=id, type=typ, by=by, time=time,
-  #                          descendants=descendants, score=score, title=title, url=url)
-
-  #   # delete the old stories from the database
-  #   # TODO: edit this lines
-  #   print(Story.objects.all().count())
-  #   if Story.objects.all().count() > 100:
-  #     all_stories = Story.objects.all()
-  #     old_stories = all_stories[100:]
-  #     print(old_stories.count())
-  #     for story in old_stories:
-  #       story.delete()
-  #   print(Story.objects.all().count())
-
-  #   items = [story.serialize() for story in Story.objects.all()]
-
-  #   return response.Response(items, status=status.HTTP_200_OK)
 
 
 class NewStoriesView(GenericAPIView):
   def get(self, request):
     # Get the latest 100 stories Id from the API
     url = "/v0/newstories.json?print=pretty"
-    decoded = baseAPIConnection(url)
-    decoded_100 = decoded[:100]
+    decoded_100 = baseAPIConnection(url)[:100]
+
+    # pagination
+    if pagination(self, request, decoded_100):
+      page, pg = pagination(self, request, decoded_100)  # type: ignore
+      return self.get_paginated_response({f'New Stories Id Page {pg}': page})
+
     return response.Response({'New Stories Id': decoded_100}, status=status.HTTP_200_OK)
 
 
-class NewJobsView(GenericAPIView):
+class TopStoriesView(GenericAPIView):
   def get(self, request):
-    # Get the latest 100 stories Id from the API
+    # Get the top 100 stories Id from the API
+    url = "/v0/topstories.json?print=pretty"
+    decoded_100 = baseAPIConnection(url)[:100]
+
+    # pagination
+    if pagination(self, request, decoded_100):
+      page, pg = pagination(self, request, decoded_100)  # type: ignore
+      return self.get_paginated_response({f'Top Stories Id Page {pg}': page})
+
+    return response.Response({'Top Stories Id': decoded_100}, status=status.HTTP_200_OK)
+
+
+class LatestJobsView(GenericAPIView):
+  def get(self, request):
+    # Get the latest 100 jobs Id from the API
     url = "/v0/jobstories.json?print=pretty"
-    decoded = baseAPIConnection(url)
-    decoded_100 = decoded[:100]
-    return response.Response({'New Jobs Id': decoded_100}, status=status.HTTP_200_OK)
+    decoded_100 = baseAPIConnection(url)[:100]
+
+    # pagination
+    if pagination(self, request, decoded_100):
+      page, pg = pagination(self, request, decoded_100)  # type: ignore
+      return self.get_paginated_response({f'Latest Jobs Id Page {pg}': page})
+
+    return response.Response({'Latest Jobs Id': decoded_100}, status=status.HTTP_200_OK)
+
+
+class GetItemsView(GenericAPIView):
+
+  def get(self, request):
+
+    # filter by type
+    type = request.query_params.get('type')
+    if type:
+      if type == 'story':
+        items = Story.objects.all()
+        serializer = StorySerializer(items, many=True)
+      else:
+        items = Job.objects.all()
+        serializer = JobSerializer(items, many=True)
+
+      # pagination
+      if pagination(self, request, serializer.data):
+        page, pg = pagination(self, request, serializer.data)  # type: ignore
+        return self.get_paginated_response({f'{type} page {pg}': page})
+
+      return response.Response({f'{type}': serializer.data}, status=status.HTTP_200_OK)
+
+    # get all items from the database and return them
+    def mySort(item):
+      return item['time']
+
+    serializer1 = StorySerializer(Story.objects.all(), many=True)
+    serializer2 = JobSerializer(Job.objects.all(), many=True)
+    items = serializer1.data + serializer2.data  # type: ignore
+    items.sort(key=mySort, reverse=True)
+
+    # pagination
+    if pagination(self, request, items):
+      page, pg = pagination(self, request, items)  # type: ignore
+      return self.get_paginated_response({f'All Items page {pg}': page})
+
+    return response.Response(items, status=status.HTTP_200_OK)

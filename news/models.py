@@ -12,19 +12,7 @@ class Story(BaseModel):
       default="http://stoplight.io/prism/", blank=True, null=True)
 
   def __str__(self):
-    return f"({self.id}) {self.type} by {self.by}"
-
-  def serialize(self):
-    return {
-        "id": self.id,
-        "type": self.type,
-        "by": self.by,
-        "time": self.time,
-        "descendants": self.descendants,
-        "score": self.score,
-        "title": self.title,
-        "url": self.url,
-    }
+    return f"({self.id}) {self.type} by {self.by} at {self.time}"
 
 
 class Job(BaseModel):
@@ -33,41 +21,4 @@ class Job(BaseModel):
   title = models.CharField(max_length=255, blank=True, null=True)
 
   def __str__(self):
-    return f"({self.id}) {self.type} by {self.by}"
-
-  def serialize(self):
-    return {
-        "id": self.id,
-        "type": self.type,
-        "by": self.by,
-        "time": self.time,
-        "text": self.text,
-        "url": self.url,
-        "title": self.title,
-    }
-
-
-# class Comment(BaseModel):
-#   parent = models.IntegerField(blank=True, null=True)
-#   text = models.TextField(blank=True, null=True)
-
-#   def __str__(self):
-#     return f"({self.id}) {self.type} by {self.by}"
-
-
-# class Poll(BaseModel):
-#   descendants = models.IntegerField(blank=True, null=True)
-#   score = models.IntegerField(blank=True, null=True)
-#   title = models.CharField(max_length=255, blank=True, null=True)
-#   text = models.TextField(blank=True, null=True)
-
-#   def __str__(self):
-#     return f"({self.id}) {self.type} by {self.by}"
-
-
-# class PollOption(BaseModel):
-#   parent = models.IntegerField(blank=True, null=True)
-#   text = models.TextField(blank=True, null=True)
-
-#   def __str__(self):
-#     return f"({self.id}) {self.type} by {self.by}"
+    return f"({self.id}) {self.type} by {self.by} at {self.time}"

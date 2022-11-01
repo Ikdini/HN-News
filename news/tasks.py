@@ -10,8 +10,7 @@ def sync_stories_task():
   # TODO: add a try catch block to handle the error
   # Get new stories from the API
   url = "/v0/newstories.json?print=pretty"
-  decoded = views.baseAPIConnection(url)
-  decoded_100 = decoded[:100]
+  decoded_100 = views.baseAPIConnection(url)[:100]
 
   # get the item properties and save to the database if it doesn't exist
   added_stories = 0
@@ -87,8 +86,7 @@ def sync_jobs_task():
   # TODO: add a try catch block to handle the error
   # Get new jobs from the API
   url = "/v0/jobstories.json?print=pretty"
-  decoded = views.baseAPIConnection(url)
-  decoded_100 = decoded[:100]
+  decoded_100 = views.baseAPIConnection(url)[:100]
 
   # get the item properties and save to the database if it doesn't exist
   added_jobs = 0
